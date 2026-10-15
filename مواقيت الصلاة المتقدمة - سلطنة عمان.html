@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مواقيت الصلاة والمسبحة والأذكار - سلطنة عمان</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif'],
+                        amiri: ['Amiri', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+        .font-amiri { font-family: 'Amiri', serif; }
+        
+        /* Theme 1: Royal Islamic */
+        body.theme-royal-dark { background-color: #071318; color: #f1f5f9; }
+        body.theme-royal-light { background-color: #f4f8f6; color: #0f172a; }
+
+        /* Theme 2: Cyber / Tech */
+        body.theme-cyber-dark { background-color: #030712; color: #f8fafc; }
+        body.theme-cyber-light { background-color: #f8fafc; color: #0f172a; }
+
+        /* Theme 3: Desert Oasis */
+        body.theme-desert-dark { background-color: #1a1412; color: #fef3c7; }
+        body.theme-desert-light { background-color: #fffbeb; color: #78350f; }
+
+        /* Ensure select options display black text in dark mode */
+        body.dark-mode-select select option {
+            color: #000000 !important;
+            background-color: #ffffff !important;
+        }
+
+        /* Styles for bead drag animation */
+        .bead-string {
+            touch-action: none;
+            user-select: none;
+        }
+
+        /* Custom scrollbar for azkar tabs */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="theme-royal-dark transition-colors duration-500 min-h-screen pb-12 flex flex-col justify-between selection:bg-amber-500 selection:text-white">
+
+    <div>
+        <header class="border-b backdrop-blur-md sticky top-0 z-50 transition-colors duration-300" id="main-header">
+            <div class="max-w-4xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg" id="logo-box">
+                        <i class="fa-solid fa-mosque"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight" id="header-title">مواقيت الصلاة في عمان</h1>
+                        <p class="text-xs opacity-75" id="current-hijri-date">جارٍ التحديث...</p>
+                    </div>
+                </div>
+
+                <!-- Customization Controls -->
+                <div class="flex items-center gap-2">
+                    <select id="theme-selector" class="text-xs rounded-xl px-3 py-2 border outline-none font-semibold transition-all cursor-pointer">
+                        <option value="royal">🕌 الطراز الملكي الإسلامي</option>
+                        <option value="cyber">⚡ الطراز الرقمي المودرن</option>
+                        <option value="desert">🏜️ طراز الواحة الصحراوية</option>
+                    </select>
+
+                    <button id="mode-toggle-btn" title="تغيير النمط (مظلم / مضيء)" class="p-2.5 rounded-xl border transition-all">
+                        <i class="fa-solid fa-moon text-amber-400" id="mode-icon"></i>
+                    </button>
+
+                    <button id="qibla-modal-btn" title="اتجاه القبلة" class="p-2.5 rounded-xl border transition-all">
+                        <i class="fa-solid fa-compass"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-4xl mx-auto px-4 pt-6 space-y-6">
+
+            <!-- Location & Controls Box -->
+            <section class="border rounded-2xl p-4 md:p-6 shadow-xl transition-all duration-300" id="card-location">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                    <div>
+                        <label for="wilayat-select" class="block text-xs font-semibold opacity-80 mb-1">اختر المحافظة / الولاية:</label>
+                        <div class="relative">
+                            <select id="wilayat-select" class="w-full border rounded-xl px-4 py-3 appearance-none focus:outline-none transition-all font-semibold text-sm">
+                                <!-- Populated dynamically -->
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center px-4 opacity-60">
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between md:justify-end gap-3 text-xs md:text-sm pt-2 md:pt-0">
+                        <div class="flex items-center gap-2 px-3 py-2 rounded-xl border">
+                            <i class="fa-regular fa-calendar-check text-amber-500"></i>
+                            <span id="gregorian-date">-- ---- ----</span>
+                        </div>
+                        <button id="detect-location-btn" class="border px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 font-medium shadow-sm">
+                            <i class="fa-solid fa-location-crosshairs"></i>
+                            <span>موقعي</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Hero Countdown -->
+            <section class="border rounded-3xl p-6 md:p-8 text-center relative overflow-hidden shadow-2xl transition-all duration-300" id="card-hero">
+                <div class="absolute -top-12 -left-12 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-12 -right-12 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="relative z-10 space-y-4">
+                    <span id="next-prayer-tag" class="inline-block text-xs px-3 py-1 rounded-full border font-semibold tracking-wider">
+                        الصلاة القادمة
+                    </span>
+
+                    <h2 id="next-prayer-name" class="text-3xl md:text-5xl font-extrabold font-amiri">
+                        جارٍ الحساب...
+                    </h2>
+
+                    <div class="flex justify-center items-baseline gap-2 dir-ltr">
+                        <span id="countdown-timer" class="text-4xl md:text-6xl font-black font-mono tracking-wider">
+                            00:00:00
+                        </span>
+                    </div>
+
+                    <p id="next-prayer-time-text" class="text-sm md:text-base font-medium opacity-80">
+                        متبقي حتى أذان -- الساعة --:--
+                    </p>
+                </div>
+            </section>
+
+            <!-- Prayer Cards Dynamic Container -->
+            <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4" id="prayer-cards-container">
+            </section>
+
+            <!-- Section: Misbaha / Tasbeeh Counter -->
+            <section class="border rounded-3xl p-5 md:p-6 shadow-xl space-y-5 transition-all duration-300" id="card-tasbeeh">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b pb-3 border-opacity-20">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-fingerprint text-amber-500 text-xl"></i>
+                        <h3 class="font-bold text-lg font-amiri">مسبحة الاستغفار والتسبيح</h3>
+                    </div>
+
+                    <!-- Misbaha Mode Controls -->
+                    <div class="flex items-center gap-2 text-xs">
+                        <button id="btn-mode-manual" class="px-3 py-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-500 font-bold transition-all">
+                            🖐️ يدوية (سحب)
+                        </button>
+                        <button id="btn-mode-digital" class="px-3 py-1.5 rounded-lg border border-gray-500/20 opacity-70 font-semibold transition-all">
+                            📟 إلكترونية
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Customization Style Options -->
+                <div class="flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div class="flex items-center gap-2">
+                        <label for="tasbeeh-style-select" class="font-medium opacity-80">الشكل والنوع:</label>
+                        <select id="tasbeeh-style-select" class="px-3 py-1.5 rounded-xl border outline-none font-semibold cursor-pointer">
+                            <!-- Populated dynamically based on mode -->
+                        </select>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button id="reset-tasbeeh-btn" class="px-3 py-1 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-all flex items-center gap-1">
+                            <i class="fa-solid fa-rotate-right text-xs"></i> إعادة الضبط
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tasbeeh Counter Display Canvas / Interactive Box -->
+                <div class="flex flex-col items-center justify-center p-6 rounded-2xl border relative overflow-hidden transition-all min-h-[220px]" id="tasbeeh-box">
+                    
+                    <!-- Digital Misbaha UI -->
+                    <div id="digital-misbaha-ui" class="hidden flex flex-col items-center gap-4 w-full max-w-xs">
+                        <div id="digital-screen" class="w-full py-4 rounded-2xl border-2 text-center font-mono text-4xl md:text-5xl font-extrabold tracking-widest shadow-inner">
+                            0000
+                        </div>
+                        <button id="digital-tap-btn" class="w-28 h-28 rounded-full border-4 shadow-2xl flex flex-col items-center justify-center active:scale-95 transition-transform cursor-pointer">
+                            <span class="text-xs font-bold opacity-80">اضغط</span>
+                            <i class="fa-solid fa-hand-pointer text-xl mt-1"></i>
+                        </button>
+                    </div>
+
+                    <!-- Manual Beads Drag Misbaha UI -->
+                    <div id="manual-misbaha-ui" class="flex flex-col items-center justify-center w-full space-y-4">
+                        <div class="text-center">
+                            <span id="manual-count-display" class="text-4xl md:text-5xl font-black font-mono text-amber-500">0</span>
+                            <p class="text-xs opacity-75 mt-1">اسحب الخرزة للأعلى أو لأسفل للتسبيح</p>
+                        </div>
+
+                        <!-- Visual Bead String Container -->
+                        <div id="bead-drag-area" class="w-full max-w-sm h-32 border rounded-2xl relative flex items-center justify-center overflow-hidden cursor-grab active:cursor-grabbing bead-string shadow-inner">
+                            <div class="absolute w-full h-1 bg-amber-700/40"></div>
+                            
+                            <!-- Animated Beads Strand -->
+                            <div id="beads-strand" class="flex items-center gap-6 transition-transform duration-200">
+                                <!-- Beads injected by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Section: Azkar & Duas Encyclopedia -->
+            <section class="border rounded-3xl p-5 md:p-6 space-y-4 shadow-xl transition-all duration-300" id="card-azkar-section">
+                <div class="flex items-center justify-between border-b pb-3 border-opacity-20">
+                    <h3 class="font-bold text-lg font-amiri flex items-center gap-2">
+                        <i class="fa-solid fa-hands-praying text-amber-500"></i>
+                        <span>موسوعة الأذكار والأدعية</span>
+                    </h3>
+                    <span class="text-xs opacity-70">حصن المسلم</span>
+                </div>
+
+                <!-- Azkar Category Tabs -->
+                <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar text-xs md:text-sm font-semibold" id="azkar-category-tabs">
+                    <button data-cat="sabah" class="azkar-tab px-3.5 py-2 rounded-xl border border-amber-500/50 bg-amber-500/10 text-amber-500 whitespace-nowrap transition-all font-bold">أذكار الصباح</button>
+                    <button data-cat="massa" class="azkar-tab px-3.5 py-2 rounded-xl border border-transparent opacity-70 hover:opacity-100 whitespace-nowrap transition-all">أذكار المساء</button>
+                    <button data-cat="masjid_enter" class="azkar-tab px-3.5 py-2 rounded-xl border border-transparent opacity-70 hover:opacity-100 whitespace-nowrap transition-all">دخول المسجد</button>
+                    <button data-cat="masjid_exit" class="azkar-tab px-3.5 py-2 rounded-xl border border-transparent opacity-70 hover:opacity-100 whitespace-nowrap transition-all">الخروج من المسجد</button>
+                    <button data-cat="khauf" class="azkar-tab px-3.5 py-2 rounded-xl border border-transparent opacity-70 hover:opacity-100 whitespace-nowrap transition-all">أذكار الخوف والفزع</button>
+                    <button data-cat="post_prayer" class="azkar-tab px-3.5 py-2 rounded-xl border border-transparent opacity-70 hover:opacity-100 whitespace-nowrap transition-all">بعد الصلاة</button>
+                    <button data-cat="duas" class="azkar-tab px-3.5 py-2 rounded-xl border border-transparent opacity-70 hover:opacity-100 whitespace-nowrap transition-all">أدعية مأثورة</button>
+                </div>
+
+                <!-- Azkar List Container -->
+                <div class="space-y-3 pt-2" id="azkar-list-container">
+                    <!-- Dynamic Cards Injected -->
+                </div>
+            </section>
+
+            <!-- Section: Daily Wisdom Quote -->
+            <section class="border rounded-2xl p-5 md:p-6 space-y-3 transition-all duration-300" id="card-dhikr">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-base flex items-center gap-2">
+                        <i class="fa-solid fa-book-open text-amber-500"></i>
+                        <span>حكمة ودعاء اليوم</span>
+                    </h3>
+                    <button id="next-dhikr-btn" class="text-xs opacity-75 hover:opacity-100 transition-opacity">
+                        تغيير <i class="fa-solid fa-arrows-rotate mr-1"></i>
+                    </button>
+                </div>
+                <blockquote id="dhikr-text" class="text-sm leading-relaxed italic p-4 rounded-xl border-r-4 border-amber-500 font-amiri">
+                    "اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ"
+                </blockquote>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 text-center text-xs opacity-60 space-y-2">
+        <p>تطبيق مواقيت الصلاة والأذكار والمسبحة - سلطنة عمان &copy; <span id="year-span"></span></p>
+        <p>وزارة الأوقاف والشؤون الدينية - سلطنة عمان</p>
+    </footer>
+
+    <!-- Qibla Modal -->
+    <div id="qibla-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="border rounded-3xl p-6 w-full max-w-sm text-center space-y-6 shadow-2xl relative" id="qibla-modal-box">
+            <button id="close-qibla-btn" class="absolute top-4 left-4 opacity-75 hover:opacity-100 p-2">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            
+            <h3 class="text-xl font-bold flex items-center justify-center gap-2 font-amiri">
+                <i class="fa-solid fa-compass text-amber-500"></i> اتجاه القبلة
+            </h3>
+            
+            <p class="text-xs opacity-80">زاوية الاتجاه مباشرة نحو الكعبة المشرفة بالنسبة لشمال الولاية الحالية</p>
+
+            <div class="relative w-48 h-48 mx-auto flex items-center justify-center">
+                <div class="absolute inset-0 rounded-full border-4 flex items-center justify-center" id="compass-ring">
+                    <span class="absolute top-2 text-xs font-bold text-red-500">N</span>
+                    <span class="absolute bottom-2 text-xs font-bold opacity-75">S</span>
+                    <span class="absolute right-2 text-xs font-bold opacity-75">E</span>
+                    <span class="absolute left-2 text-xs font-bold opacity-75">W</span>
+                </div>
+                <div id="compass-needle" class="w-full h-full relative transition-transform duration-500 flex items-center justify-center">
+                    <i class="fa-solid fa-kaaba text-amber-500 text-3xl"></i>
+                    <div class="absolute top-4 w-1 h-16 bg-amber-500 rounded-t-full shadow-lg"></div>
+                </div>
+            </div>
+
+            <div class="p-3 rounded-xl border text-xs" id="qibla-val-box">
+                زاوية القبلة: <span id="qibla-degree" class="font-bold text-amber-500">265°</span> من الشمال
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const OMAN_LOCATIONS = [
+            { name: "مسقط - العاصمة", lat: 23.6100, lng: 58.5400 },
+            { name: "السيب", lat: 23.6700, lng: 58.1800 },
+            { name: "بوشر", lat: 23.5800, lng: 58.4000 },
+            { name: "المطرح", lat: 23.6200, lng: 58.5700 },
+            { name: "صلالة (ظفار)", lat: 17.0151, lng: 54.0924 },
+            { name: "طاقة", lat: 17.0380, lng: 54.3920 },
+            { name: "مرباط", lat: 16.9919, lng: 54.6923 },
+            { name: "خصب (مسندم)", lat: 26.1799, lng: 56.2477 },
+            { name: "دبا", lat: 25.6191, lng: 56.2729 },
+            { name: "البريمي", lat: 24.2500, lng: 55.7667 },
+            { name: "نزوى (الداخلية)", lat: 22.9333, lng: 57.5333 },
+            { name: "بهلاء", lat: 22.9667, lng: 57.3000 },
+            { name: "سمائل", lat: 23.3000, lng: 58.0167 },
+            { name: "صحار (شمال الباطنة)", lat: 24.3477, lng: 56.7094 },
+            { name: "الشناص", lat: 24.7431, lng: 56.4678 },
+            { name: "صحم", lat: 24.1722, lng: 56.8889 },
+            { name: "الرستاق (جنوب الباطنة)", lat: 23.3908, lng: 57.4244 },
+            { name: "بركاء", lat: 23.7078, lng: 57.8864 },
+            { name: "صور (جنوب الشرقية)", lat: 22.5667, lng: 59.5289 },
+            { name: "الكامل والوافي", lat: 22.4833, lng: 59.2000 },
+            { name: "إبراء (شمال الشرقية)", lat: 22.6833, lng: 58.5333 },
+            { name: "بدية", lat: 22.4500, lng: 58.8000 },
+            { name: "عبري (الظاهرة)", lat: 23.2333, lng: 56.5167 },
+            { name: "ينقل", lat: 23.5833, lng: 56.5500 },
+            { name: "هيماء (الوسطى)", lat: 19.9500, lng: 56.2833 },
+            { name: "الدقم", lat: 19.6500, lng: 57.7000 }
+        ];
+
+        const FULL_AZKAR = {
+            sabah: [
+                { text: "أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ لاَ إِلَهَ إِلاَّ اللَّهُ وَحْدَهُ لاَ شَرِيكَ لَهُ.", count: 1 },
+                { text: "اللَّهُمَّ بِكَ أَصْبَحْنَا، وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ وَإِلَيْكَ النُّشُورُ.", count: 1 },
+                { text: "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ: عَدَدَ خَلْقِهِ، وَرِضَا نَفْسِهِ، وَزِنَةَ عَرْشِهِ، وَمِدَادَ كَلِمَاتِهِ.", count: 3 },
+                { text: "يَا حَيُّ يَا قَيُّومُ بِرَحْمَتِكَ أَسْتَغِيثُ أَصْلِحْ لِي شَأْنِي كُلَّهُ وَلاَ تَكِلْنِي إِلَى نَفْسِي طَرْفَةَ عَيْنٍ.", count: 1 }
+            ],
+            massa: [
+                { text: "أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ لاَ إِلَهَ إِلاَّ اللَّهُ وَحْدَهُ لاَ شَرِيكَ لَهُ.", count: 1 },
+                { text: "اللَّهُمَّ بِكَ أَمْسَيْنَا، وَبِكَ أَصْبَحْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ وَإِلَيْكَ الْمَصِيرُ.", count: 1 },
+                { text: "أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ.", count: 3 }
+            ],
+            masjid_enter: [
+                { text: "أَعُوذُ بِاللَّهِ العَظِيمِ، وَبِوَجْهِهِ الكَرِيمِ، وَسُلْطَانِهِ القَدِيمِ، مِنَ الشَّيْطَانِ الرَّجِيمِ. بِسْمِ اللَّهِ، وَالصَّلاَةُ وَالسَّلاَمُ عَلَى رَسُولِ اللَّهِ، اللَّهُمَّ افْتَحْ لِي أَبْوَابَ رَحْمَتِكَ.", count: 1 }
+            ],
+            masjid_exit: [
+                { text: "بِسْمِ اللَّهِ، وَالصَّلاَةُ وَالسَّلاَمُ عَلَى رَسُولِ اللَّهِ، اللَّهُمَّ إِنِّي أَسْأَلُكَ مِنْ فَضْلِكَ، اللَّهُمَّ اعْصِمْنِي مِنَ الشَّيْطَانِ الرَّجِيمِ.", count: 1 }
+            ],
+            khauf: [
+                { text: "لاَ إِلَهَ إِلاَّ اللَّهُ (كَانَ النَّبِيُّ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ يَقُولُهَا عِنْدَ الفَزَعِ وَالْفَزَعِ فِي اللَّيْلِ).", count: 1 },
+                { text: "أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ غَضَبِهِ وَعِقَابِهِ وَشَرِّ عِبَادِهِ، وَمِنْ هَمَزَاتِ الشَّيَاطِينِ وَأَنْ يَحْضُرُونِ.", count: 1 },
+                { text: "حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ.", count: 7 }
+            ],
+            post_prayer: [
+                { text: "أَسْتَغْفِرُ اللَّهَ (ثَلاَثاً)، اللَّهُمَّ أَنْتَ السَّلاَمُ وَمِنْكَ السَّلاَمُ، تَبَارَكْتَ يَا ذَا الْجَلاَلِ وَالإِكْرَامِ.", count: 1 },
+                { text: "سُبْحَانَ اللَّهِ (33)، الْحَمْدُ لِلَّهِ (33)، اللَّهُ أَكْبَرُ (33)، لاَ إِلَهَ إِلاَّ اللَّهُ وَحْدَهُ لاَ شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ.", count: 1 }
+            ],
+            duas: [
+                { text: "رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ.", count: 1 },
+                { text: "اللَّهُمَّ إِنِّي أَسْأَلُكَ الْهُدَى وَالتُّقَى وَالْعَفَافَ وَالْغِنَى.", count: 1 },
+                { text: "رَبِّ اشْرَحْ لِي صَدْرِي وَيَسِّرْ لِي أَمْرِي وَاحْلُلْ عُقْدَةً مِنْ لِسَانِي يَفْقَهُوا قَوْلِي.", count: 1 }
+            ]
+        };
+
+        const AZKAR_QUOTES = [
+            "اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ",
+            "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ ، سُبْحَانَ اللَّهِ الْعَظِيمِ",
+            "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ الْعَلِيِّ الْعَظِيمِ",
+            "اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ",
+            "أَسْتَغْفِرُ اللَّهَ الَّذِي لَا إِلَهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ وَأَتُوبُ إِلَيْهِ"
+        ];
+
+        let currentTheme = 'royal';
+        let isDark = true;
+        let currentLocation = OMAN_LOCATIONS[0];
+        let pTimes = {};
+        let timerInterval = null;
+        let activeAzkarCat = 'sabah';
+
+        // Tasbeeh State
+        let tasbeehMode = 'manual'; // 'manual' or 'digital'
+        let tasbeehCount = 0;
+        let selectedStyle = 'wood';
+
+        const MANUAL_STYLES = {
+            wood: { name: "🪵 خشبية كلاسيكية", beadClass: "bg-amber-800 border-amber-600 shadow-md" },
+            pearl: { name: "🦪 لؤلؤية فاخرة", beadClass: "bg-slate-100 border-slate-300 shadow-lg text-slate-800" },
+            emerald: { name: "💎 عقيق زمردي", beadClass: "bg-emerald-600 border-emerald-400 shadow-emerald-900/50" }
+        };
+
+        const DIGITAL_STYLES = {
+            gold: { name: "✨ ذهبي رقمي", screenBg: "bg-amber-950 text-amber-400 border-amber-500", btnBg: "bg-amber-500 text-black border-amber-300" },
+            neon: { name: "⚡ أزرق نيوني", screenBg: "bg-cyan-950 text-cyan-400 border-cyan-500", btnBg: "bg-cyan-500 text-black border-cyan-300" },
+            rose: { name: "🌸 وردي مذهب", screenBg: "bg-rose-950 text-rose-300 border-rose-400", btnBg: "bg-rose-500 text-white border-rose-300" }
+        };
+
+        const PRAYER_NAMES = {
+            Fajr: "الفجر", Sunrise: "الشروق", Dhuhr: "الظهر",
+            Asr: "العصر", Maghrib: "المغرب", Isha: "العشاء"
+        };
+
+        const PRAYER_ICONS = {
+            Fajr: "fa-cloud-moon", Sunrise: "fa-sun", Dhuhr: "fa-sun",
+            Asr: "fa-sun-plant-wilt", Maghrib: "fa-cloud-sun", Isha: "fa-moon"
+        };
+
+        const selectEl = document.getElementById('wilayat-select');
+        const themeSelector = document.getElementById('theme-selector');
+        const modeToggleBtn = document.getElementById('mode-toggle-btn');
+        const modeIcon = document.getElementById('mode-icon');
+        const cardsContainer = document.getElementById('prayer-cards-container');
+        const nextPrayerNameEl = document.getElementById('next-prayer-name');
+        const countdownTimerEl = document.getElementById('countdown-timer');
+        const nextPrayerTimeTextEl = document.getElementById('next-prayer-time-text');
+        const gregorianDateEl = document.getElementById('gregorian-date');
+        const hijriDateEl = document.getElementById('current-hijri-date');
+        const dhikrTextEl = document.getElementById('dhikr-text');
+
+        window.onload = function() {
+            document.getElementById('year-span').innerText = new Date().getFullYear();
+            populateLocationsSelect();
+            setupEventListeners();
+            applyThemeStyles();
+            loadPrayerTimes(currentLocation.lat, currentLocation.lng);
+            initTasbeeh();
+            renderAzkarList();
+        };
+
+        function populateLocationsSelect() {
+            selectEl.innerHTML = '';
+            OMAN_LOCATIONS.forEach((loc, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.textContent = loc.name;
+                selectEl.appendChild(opt);
+            });
+        }
+
+        function applyThemeStyles() {
+            const body = document.body;
+            body.className = `transition-colors duration-500 min-h-screen pb-12 flex flex-col justify-between selection:bg-amber-500 selection:text-white theme-${currentTheme}-${isDark ? 'dark' : 'light'}`;
+
+            if (isDark) {
+                body.classList.add('dark-mode-select');
+            } else {
+                body.classList.remove('dark-mode-select');
+            }
+
+            const header = document.getElementById('main-header');
+            const logoBox = document.getElementById('logo-box');
+            const cardLocation = document.getElementById('card-location');
+            const cardHero = document.getElementById('card-hero');
+            const cardTasbeeh = document.getElementById('card-tasbeeh');
+            const tasbeehBox = document.getElementById('tasbeeh-box');
+            const cardAzkar = document.getElementById('card-azkar-section');
+            const cardDhikr = document.getElementById('card-dhikr');
+            const qiblaModalBox = document.getElementById('qibla-modal-box');
+
+            if (isDark) {
+                selectEl.style.color = '#000000';
+                selectEl.style.backgroundColor = '#ffffff';
+                themeSelector.style.color = '#000000';
+                themeSelector.style.backgroundColor = '#ffffff';
+            } else {
+                selectEl.style.color = '';
+                selectEl.style.backgroundColor = '';
+                themeSelector.style.color = '';
+                themeSelector.style.backgroundColor = '';
+            }
+
+            if (currentTheme === 'royal') {
+                if (isDark) {
+                    header.className = "border-b border-emerald-900/50 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 text-slate-100";
+                    logoBox.className = "w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-amber-500 flex items-center justify-center text-white font-bold text-xl shadow-lg";
+                    cardLocation.className = "bg-slate-900/80 border border-emerald-900/40 rounded-2xl p-4 md:p-6 shadow-xl text-slate-100";
+                    cardHero.className = "bg-gradient-to-br from-slate-900 via-emerald-950/40 to-slate-950 border border-amber-500/30 rounded-3xl p-6 md:p-8 text-center relative overflow-hidden shadow-2xl text-slate-100";
+                    cardTasbeeh.className = "bg-slate-900/70 border border-emerald-900/40 rounded-3xl p-5 md:p-6 shadow-xl text-slate-100";
+                    tasbeehBox.className = "flex flex-col items-center justify-center p-6 rounded-2xl border border-emerald-900/50 bg-slate-950/50 relative overflow-hidden transition-all min-h-[220px]";
+                    cardAzkar.className = "bg-slate-900/70 border border-emerald-900/40 rounded-3xl p-5 md:p-6 shadow-xl text-slate-100";
+                    cardDhikr.className = "bg-slate-900/50 border border-emerald-900/30 rounded-2xl p-5 md:p-6 space-y-3 text-slate-100";
+                    qiblaModalBox.className = "bg-slate-900 border border-emerald-800 rounded-3xl p-6 w-full max-w-sm text-center space-y-6 shadow-2xl relative text-slate-100";
+                } else {
+                    header.className = "border-b border-emerald-200 bg-white/90 backdrop-blur-md sticky top-0 z-50 text-slate-800";
+                    logoBox.className = "w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-700 to-amber-600 flex items-center justify-center text-white font-bold text-xl shadow-lg";
+                    cardLocation.className = "bg-white border border-emerald-100 rounded-2xl p-4 md:p-6 shadow-xl text-slate-800";
+                    cardHero.className = "bg-gradient-to-br from-emerald-50 via-amber-50/50 to-white border border-amber-400/50 rounded-3xl p-6 md:p-8 text-center relative overflow-hidden shadow-2xl text-slate-800";
+                    cardTasbeeh.className = "bg-white border border-emerald-200 rounded-3xl p-5 md:p-6 shadow-xl text-slate-800";
+                    tasbeehBox.className = "flex flex-col items-center justify-center p-6 rounded-2xl border border-emerald-200 bg-emerald-50/30 relative overflow-hidden transition-all min-h-[220px]";
+                    cardAzkar.className = "bg-white border border-emerald-200 rounded-3xl p-5 md:p-6 shadow-xl text-slate-800";
+                    cardDhikr.className = "bg-emerald-50/50 border border-emerald-200 rounded-2xl p-5 md:p-6 space-y-3 text-slate-800";
+                    qiblaModalBox.className = "bg-white border border-emerald-200 rounded-3xl p-6 w-full max-w-sm text-center space-y-6 shadow-2xl relative text-slate-800";
+                }
+            } else if (currentTheme === 'cyber') {
+                if (isDark) {
+                    header.className = "border-b border-cyan-900/50 bg-gray-950/90 backdrop-blur-md sticky top-0 z-50 text-cyan-400";
+                    logoBox.className = "w-10 h-10 rounded-xl bg-cyan-600 flex items-center justify-center text-black font-bold text-xl shadow-lg shadow-cyan-500/20";
+                    cardLocation.className = "bg-gray-900/90 border border-cyan-500/30 rounded-2xl p-4 md:p-6 shadow-xl text-cyan-100";
+                    cardHero.className = "bg-gray-900 border border-cyan-500/40 rounded-3xl p-6 md:p-8 text-center relative overflow-hidden shadow-2xl text-cyan-100";
+                    cardTasbeeh.className = "bg-gray-900/80 border border-cyan-500/30 rounded-3xl p-5 md:p-6 shadow-xl text-cyan-100";
+                    tasbeehBox.className = "flex flex-col items-center justify-center p-6 rounded-2xl border border-cyan-500/30 bg-gray-950 relative overflow-hidden transition-all min-h-[220px]";
+                    cardAzkar.className = "bg-gray-900/80 border border-cyan-500/30 rounded-3xl p-5 md:p-6 shadow-xl text-cyan-100";
+                    cardDhikr.className = "bg-gray-900/60 border border-cyan-500/20 rounded-2xl p-5 md:p-6 space-y-3 text-cyan-100";
+                    qiblaModalBox.className = "bg-gray-900 border border-cyan-500/50 rounded-3xl p-6 w-full max-w-sm text-center space-y-6 shadow-2xl relative text-cyan-100";
+                } else {
+                    header.className = "border-b border-cyan-200 bg-white/90 backdrop-blur-md sticky top-0 z-50 text-cyan-900";
+                    logoBox.className = "w-10 h-10 rounded-xl bg-cyan-500 flex items-center justify-center text-white font-bold text-xl";
+                    cardLocation.className = "bg-white border border-cyan-200 rounded-2xl p-4 md:p-6 shadow-xl text-gray-800";
+                    cardHero.className = "bg-cyan-50/50 border border-cyan-300 rounded-3xl p-6 md:p-8 text-center relative overflow-hidden shadow-2xl text-gray-800";
+                    cardTasbeeh.className = "bg-white border border-cyan-200 rounded-3xl p-5 md:p-6 shadow-xl text-gray-800";
+                    tasbeehBox.className = "flex flex-col items-center justify-center p-6 rounded-2xl border border-cyan-200 bg-cyan-50/20 relative overflow-hidden transition-all min-h-[220px]";
+                    cardAzkar.className = "bg-white border border-cyan-200 rounded-3xl p-5 md:p-6 shadow-xl text-gray-800";
+                    cardDhikr.className = "bg-cyan-50/40 border border-cyan-200 rounded-2xl p-5 md:p-6 space-y-3 text-gray-800";
+                    qiblaModalBox.className = "bg-white border border-cyan-300 rounded-3xl p-6 w-full max-w-sm text-center space-y-6 shadow-2xl relative text-gray-800";
+                }
+            } else if (currentTheme === 'desert') {
+                if (isDark) {
+                    header.className = "border-b border-amber-900/40 bg-stone-950/90 backdrop-blur-md sticky top-0 z-50 text-amber-200";
+                    logoBox.className = "w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-700 to-yellow-600 flex items-center justify-center text-stone-950 font-bold text-xl shadow-lg";
+                    cardLocation.className = "bg-stone-900/90 border border-amber-800/40 rounded-2xl p-4 md:p-6 shadow-xl text-amber-100";
+                    cardHero.className = "bg-gradient-to-br from-stone-900 via-amber-950/30 to-stone-950 border border-amber-700/40 rounded-3xl p-6 md:p-8 text-center relative overflow-hidden shadow-2xl text-amber-100";
+                    cardTasbeeh.className = "bg-stone-900/80 border border-amber-800/40 rounded-3xl p-5 md:p-6 shadow-xl text-amber-100";
+                    tasbeehBox.className = "flex flex-col items-center justify-center p-6 rounded-2xl border border-amber-800/40 bg-stone-950/60 relative overflow-hidden transition-all min-h-[220px]";
+                    cardAzkar.className = "bg-stone-900/80 border border-amber-800/40 rounded-3xl p-5 md:p-6 shadow-xl text-amber-100";
+                    cardDhikr.className = "bg-stone-900/50 border border-amber-800/30 rounded-2xl p-5 md:p-6 space-y-3 text-amber-100";
+                    qiblaModalBox.className = "bg-stone-900 border border-amber-700 rounded-3xl p-6 w-full max-w-sm text-center space-y-6 shadow-2xl relative text-amber-100";
+                } else {
+                    header.className = "border-b border-amber-200 bg-amber-50/90 backdrop-blur-md sticky top-0 z-50 text-amber-900";
+                    logoBox.className = "w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-600 to-yellow-500 flex items-center justify-center text-white font-bold text-xl";
+                    cardLocation.className = "bg-white border border-amber-200 rounded-2xl p-4 md:p-6 shadow-xl text-stone-800";
+                    cardHero.className = "bg-gradient-to-br from-amber-50 via-yellow-50 to-white border border-amber-300 rounded-3xl p-6 md:p-8 text-center relative overflow-hidden shadow-2xl text-stone-800";
+                    cardTasbeeh.className = "bg-white border border-amber-200 rounded-3xl p-5 md:p-6 shadow-xl text-stone-800";
+                    tasbeehBox.className = "flex flex-col items-center justify-center p-6 rounded-2xl border border-amber-200 bg-amber-50/30 relative overflow-hidden transition-all min-h-[220px]";
+                    cardAzkar.className = "bg-white border border-amber-200 rounded-3xl p-5 md:p-6 shadow-xl text-stone-800";
+                    cardDhikr.className = "bg-amber-50/80 border border-amber-200 rounded-2xl p-5 md:p-6 space-y-3 text-stone-800";
+                    qiblaModalBox.className = "bg-white border border-amber-300 rounded-3xl p-6 w-full max-w-sm text-center space-y-6 shadow-2xl relative text-stone-800";
+                }
+            }
+
+            modeIcon.className = isDark ? "fa-solid fa-moon text-amber-400" : "fa-solid fa-sun text-amber-500";
+            if (pTimes && Object.keys(pTimes).length > 0) renderPrayerCards();
+            renderAzkarList();
+        }
+
+        async function loadPrayerTimes(lat, lng) {
+            const today = new Date();
+            const dateStr = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
+            const url = `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lng}&method=10`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data && data.data) {
+                    pTimes = data.data.timings;
+                    const hijri = data.data.date.hijri;
+                    const greg = data.data.date.gregorian;
+                    
+                    hijriDateEl.innerText = `${hijri.day} ${hijri.month.ar} ${hijri.year} هـ`;
+                    gregorianDateEl.innerText = `${greg.day} ${greg.month.en} ${greg.year}`;
+
+                    renderPrayerCards();
+                    startCountdownTimer();
+                    updateQiblaDegree(lat, lng);
+                }
+            } catch (err) {
+                console.error("فشل جلب أوقات الصلاة:", err);
+            }
+        }
+
+        function renderPrayerCards() {
+            cardsContainer.innerHTML = '';
+            const mainPrayers = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+
+            mainPrayers.forEach(key => {
+                const card = document.createElement('div');
+                card.id = `card-${key}`;
+                
+                let cardClass = "border rounded-2xl p-4 text-center space-y-2 transition-all duration-300 ";
+                if (isDark) {
+                    cardClass += "bg-slate-900/70 border-slate-800 text-slate-100 hover:border-amber-500/50";
+                } else {
+                    cardClass += "bg-white border-slate-200 text-slate-800 shadow-md hover:border-amber-400";
+                }
+                card.className = cardClass;
+
+                card.innerHTML = `
+                    <div class="text-xs flex justify-center items-center gap-1.5 font-medium opacity-75">
+                        <i class="fa-solid ${PRAYER_ICONS[key]} text-amber-500"></i>
+                        <span>${PRAYER_NAMES[key]}</span>
+                    </div>
+                    <div class="text-lg md:text-xl font-bold font-mono">${format12Hour(pTimes[key])}</div>
+                `;
+                cardsContainer.appendChild(card);
+            });
+        }
+
+        function format12Hour(time24) {
+            if (!time24) return "--:--";
+            let [hours, minutes] = time24.split(':');
+            hours = parseInt(hours);
+            const period = hours >= 12 ? 'م' : 'ص';
+            hours = hours % 12 || 12;
+            return `${hours}:${minutes} ${period}`;
+        }
+
+        function startCountdownTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+
+            function update() {
+                const now = new Date();
+                const mainPrayers = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+                let nextPrayer = null;
+                let minDiff = Infinity;
+
+                mainPrayers.forEach(key => {
+                    const [h, m] = pTimes[key].split(':');
+                    const pDate = new Date();
+                    pDate.setHours(parseInt(h), parseInt(m), 0, 0);
+
+                    let diff = pDate - now;
+                    if (diff > 0 && diff < minDiff) {
+                        minDiff = diff;
+                        nextPrayer = { key, time: pDate };
+                    }
+                });
+
+                if (!nextPrayer) {
+                    const [h, m] = pTimes['Fajr'].split(':');
+                    const tomorrowFajr = new Date();
+                    tomorrowFajr.setDate(tomorrowFajr.getDate() + 1);
+                    tomorrowFajr.setHours(parseInt(h), parseInt(m), 0, 0);
+                    nextPrayer = { key: 'Fajr', time: tomorrowFajr };
+                    minDiff = tomorrowFajr - now;
+                }
+
+                mainPrayers.forEach(k => {
+                    const el = document.getElementById(`card-${k}`);
+                    if (el) {
+                        if (k === nextPrayer.key) {
+                            el.classList.add('border-amber-500', 'ring-2', 'ring-amber-500/30');
+                        } else {
+                            el.classList.remove('border-amber-500', 'ring-2', 'ring-amber-500/30');
+                        }
+                    }
+                });
+
+                const totalSecs = Math.floor(minDiff / 1000);
+                const hrs = Math.floor(totalSecs / 3600);
+                const mins = Math.floor((totalSecs % 3600) / 60);
+                const secs = totalSecs % 60;
+
+                nextPrayerNameEl.innerText = PRAYER_NAMES[nextPrayer.key];
+                countdownTimerEl.innerText = `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+                nextPrayerTimeTextEl.innerText = `متبقي على أذان ${PRAYER_NAMES[nextPrayer.key]} (الساعة ${format12Hour(pTimes[nextPrayer.key])})`;
+            }
+
+            update();
+            timerInterval = setInterval(update, 1000);
+        }
+
+        function pad(n) { return n < 10 ? '0' + n : n; }
+
+        function updateQiblaDegree(lat, lng) {
+            const kaabaLat = 21.4225;
+            const kaabaLng = 39.8262;
+
+            const phiK = kaabaLat * Math.PI / 180;
+            const lambdaK = kaabaLng * Math.PI / 180;
+            const phi = lat * Math.PI / 180;
+            const lambda = lng * Math.PI / 180;
+
+            const qiblaRad = Math.atan2(
+                Math.sin(lambdaK - lambda),
+                Math.cos(phi) * Math.tan(phiK) - Math.sin(phi) * Math.cos(lambdaK - lambda)
+            );
+
+            let qiblaDeg = qiblaRad * 180 / Math.PI;
+            if (qiblaDeg < 0) qiblaDeg += 360;
+
+            document.getElementById('qibla-degree').innerText = `${Math.round(qiblaDeg)}°`;
+            document.getElementById('compass-needle').style.transform = `rotate(${Math.round(qiblaDeg)}deg)`;
+        }
+
+        function initTasbeeh() {
+            const modeManualBtn = document.getElementById('btn-mode-manual');
+            const modeDigitalBtn = document.getElementById('btn-mode-digital');
+            const styleSelect = document.getElementById('tasbeeh-style-select');
+
+            modeManualBtn.addEventListener('click', () => {
+                tasbeehMode = 'manual';
+                modeManualBtn.className = "px-3 py-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-500 font-bold transition-all";
+                modeDigitalBtn.className = "px-3 py-1.5 rounded-lg border border-gray-500/20 opacity-70 font-semibold transition-all";
+                updateTasbeehUI();
+            });
+
+            modeDigitalBtn.addEventListener('click', () => {
+                tasbeehMode = 'digital';
+                modeDigitalBtn.className = "px-3 py-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-500 font-bold transition-all";
+                modeManualBtn.className = "px-3 py-1.5 rounded-lg border border-gray-500/20 opacity-70 font-semibold transition-all";
+                updateTasbeehUI();
+            });
+
+            styleSelect.addEventListener('change', (e) => {
+                selectedStyle = e.target.value;
+                updateTasbeehStyle();
+            });
+
+            document.getElementById('reset-tasbeeh-btn').addEventListener('click', () => {
+                tasbeehCount = 0;
+                updateCountDisplays();
+            });
+
+            document.getElementById('digital-tap-btn').addEventListener('click', () => {
+                tasbeehCount++;
+                updateCountDisplays();
+            });
+
+            setupBeadDragEvents();
+            updateTasbeehUI();
+        }
+
+        function updateTasbeehUI() {
+            const manualUI = document.getElementById('manual-misbaha-ui');
+            const digitalUI = document.getElementById('digital-misbaha-ui');
+            const styleSelect = document.getElementById('tasbeeh-style-select');
+
+            styleSelect.innerHTML = '';
+            if (tasbeehMode === 'manual') {
+                manualUI.classList.remove('hidden');
+                digitalUI.classList.add('hidden');
+
+                Object.keys(MANUAL_STYLES).forEach(key => {
+                    const opt = document.createElement('option');
+                    opt.value = key;
+                    opt.textContent = MANUAL_STYLES[key].name;
+                    styleSelect.appendChild(opt);
+                });
+            } else {
+                manualUI.classList.add('hidden');
+                digitalUI.classList.remove('hidden');
+
+                Object.keys(DIGITAL_STYLES).forEach(key => {
+                    const opt = document.createElement('option');
+                    opt.value = key;
+                    opt.textContent = DIGITAL_STYLES[key].name;
+                    styleSelect.appendChild(opt);
+                });
+            }
+
+            selectedStyle = styleSelect.value;
+            updateTasbeehStyle();
+            updateCountDisplays();
+        }
+
+        function updateTasbeehStyle() {
+            if (tasbeehMode === 'manual') {
+                renderBeadsStrand();
+            } else {
+                const screen = document.getElementById('digital-screen');
+                const btn = document.getElementById('digital-tap-btn');
+                const styleObj = DIGITAL_STYLES[selectedStyle] || DIGITAL_STYLES.gold;
+
+                screen.className = `w-full py-4 rounded-2xl border-2 text-center font-mono text-4xl md:text-5xl font-extrabold tracking-widest shadow-inner ${styleObj.screenBg}`;
+                btn.className = `w-28 h-28 rounded-full border-4 shadow-2xl flex flex-col items-center justify-center active:scale-95 transition-transform cursor-pointer ${styleObj.btnBg}`;
+            }
+        }
+
+        function renderBeadsStrand() {
+            const strand = document.getElementById('beads-strand');
+            strand.innerHTML = '';
+            const styleObj = MANUAL_STYLES[selectedStyle] || MANUAL_STYLES.wood;
+
+            for (let i = 0; i < 9; i++) {
+                const bead = document.createElement('div');
+                bead.className = `w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all ${styleObj.beadClass}`;
+                strand.appendChild(bead);
+            }
+        }
+
+        function updateCountDisplays() {
+            document.getElementById('manual-count-display').innerText = tasbeehCount;
+            document.getElementById('digital-screen').innerText = String(tasbeehCount).padStart(4, '0');
+        }
+
+        function setupBeadDragEvents() {
+            const dragArea = document.getElementById('bead-drag-area');
+            let startY = 0;
+            let isDragging = false;
+
+            const startDrag = (y) => {
+                isDragging = true;
+                startY = y;
+            };
+
+            const moveDrag = (y) => {
+                if (!isDragging) return;
+                const diff = y - startY;
+                if (Math.abs(diff) > 30) {
+                    tasbeehCount++;
+                    updateCountDisplays();
+                    animateStrandMove();
+                    isDragging = false;
+                }
+            };
+
+            const endDrag = () => { isDragging = false; };
+
+            dragArea.addEventListener('mousedown', (e) => startDrag(e.clientY));
+            window.addEventListener('mousemove', (e) => moveDrag(e.clientY));
+            window.addEventListener('mouseup', endDrag);
+
+            dragArea.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientY));
+            window.addEventListener('touchmove', (e) => moveDrag(e.touches[0].clientY));
+            window.addEventListener('touchend', endDrag);
+        }
+
+        function animateStrandMove() {
+            const strand = document.getElementById('beads-strand');
+            strand.style.transform = 'translateX(-20px)';
+            setTimeout(() => { strand.style.transform = 'translateX(0px)'; }, 150);
+        }
+
+        function renderAzkarList() {
+            const container = document.getElementById('azkar-list-container');
+            container.innerHTML = '';
+
+            const list = FULL_AZKAR[activeAzkarCat] || [];
+
+            list.forEach((item) => {
+                const card = document.createElement('div');
+                let cardStyle = isDark ? 
+                    'bg-slate-900/60 border-slate-800 text-slate-100' : 
+                    'bg-slate-50 border-slate-200 text-slate-800';
+
+                card.className = `border p-4 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-3 transition-all ${cardStyle}`;
+                
+                card.innerHTML = `
+                    <p class="text-sm leading-relaxed font-semibold font-amiri text-base flex-1">${item.text}</p>
+                    <div class="flex items-center gap-3 self-end md:self-center">
+                        <button onclick="decrementAzkarCounter(this, ${item.count})" class="border border-amber-500/40 bg-amber-500/10 text-amber-500 px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all">
+                            <span>التكرار:</span>
+                            <span class="count-num text-sm font-mono">${item.count}</span>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function decrementAzkarCounter(btnEl, initialCount) {
+            const countSpan = btnEl.querySelector('.count-num');
+            let current = parseInt(countSpan.innerText);
+            if (!isNaN(current) && current > 1) {
+                current--;
+                countSpan.innerText = current;
+            } else {
+                countSpan.innerText = '✓';
+                btnEl.className = "border border-emerald-500/40 bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all";
+            }
+        }
+
+        function setupEventListeners() {
+            selectEl.addEventListener('change', (e) => {
+                currentLocation = OMAN_LOCATIONS[e.target.value];
+                loadPrayerTimes(currentLocation.lat, currentLocation.lng);
+            });
+
+            themeSelector.addEventListener('change', (e) => {
+                currentTheme = e.target.value;
+                applyThemeStyles();
+            });
+
+            modeToggleBtn.addEventListener('click', () => {
+                isDark = !isDark;
+                applyThemeStyles();
+            });
+
+            document.getElementById('detect-location-btn').addEventListener('click', () => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            loadPrayerTimes(pos.coords.latitude, pos.coords.longitude);
+                            const opt = document.createElement('option');
+                            opt.value = "custom";
+                            opt.textContent = "موقعي الحالي المباشر (GPS)";
+                            opt.selected = true;
+                            selectEl.prepend(opt);
+                            if(isDark) {
+                                selectEl.style.color = '#000000';
+                                selectEl.style.backgroundColor = '#ffffff';
+                            }
+                        },
+                        () => alert("تعذر تحديد الموقع الجغرافي تلقائياً.")
+                    );
+                } else {
+                    alert("خاصية تحديد الموقع غير مدعومة.");
+                }
+            });
+
+            // Azkar Category Tabs Event Listeners
+            const azkarTabs = document.querySelectorAll('.azkar-tab');
+            azkarTabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    azkarTabs.forEach(t => {
+                        t.className = "azkar-tab px-3.5 py-2 rounded-xl border border-transparent opacity-70 hover:opacity-100 whitespace-nowrap transition-all";
+                    });
+                    e.target.className = "azkar-tab px-3.5 py-2 rounded-xl border border-amber-500/50 bg-amber-500/10 text-amber-500 whitespace-nowrap transition-all font-bold";
+                    activeAzkarCat = e.target.getAttribute('data-cat');
+                    renderAzkarList();
+                });
+            });
+
+            const modal = document.getElementById('qibla-modal');
+            document.getElementById('qibla-modal-btn').addEventListener('click', () => modal.classList.remove('hidden'));
+            document.getElementById('close-qibla-btn').addEventListener('click', () => modal.classList.add('hidden'));
+
+            let dhikrIdx = 0;
+            document.getElementById('next-dhikr-btn').addEventListener('click', () => {
+                dhikrIdx = (dhikrIdx + 1) % AZKAR_QUOTES.length;
+                dhikrTextEl.innerText = `"${AZKAR_QUOTES[dhikrIdx]}"`;
+            });
+        }
+    </script>
+</body>
+</html>
